@@ -41,6 +41,14 @@ class JsonWheel {
             return new WheelNode().setInner(((Map<String, Object>) inner).get(key));
         }
 
+        boolean hasNotNull(String key) {
+            if (!(inner instanceof Map)) {
+                return false;
+            }
+            Map<String, Object> map = (Map<String, Object>) inner;
+            return map.get(key) != null;
+        }
+
         <T> T val(Class<T> clazz) {
             return inner == null ? null : clazz.cast(inner);
         }

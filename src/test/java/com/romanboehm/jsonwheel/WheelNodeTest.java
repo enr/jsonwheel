@@ -90,4 +90,18 @@ class WheelNodeTest {
         var node = JsonWheel.read(json);
         assertThat(node.val(Boolean.class)).isTrue();
     }
+
+    @Test
+    void hasNotNull() {
+        var json = """
+                {
+                    "foo": null,
+                    "bar": "baz"
+                }""";
+
+        var node = JsonWheel.read(json);
+        assertThat(node.hasNotNull("foo")).as("foo key").isFalse();
+        assertThat(node.hasNotNull("bar")).as("bar key").isTrue();
+        assertThat(node.hasNotNull("missing")).as("missing key").isFalse();
+    }
 }
