@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 
 /**
  * Copyright (c) 2022 Roman Böhm. Subject to the Apache License 2.0.
- * See also https://github.com/rmnbhm/jsonwheel.
+ * See also https://github.com/romanboehm/jsonwheel.
  */
 class JsonWheel {
 
@@ -86,14 +86,17 @@ class JsonWheel {
                     valueConsumer.accept(parseString(from + 1, closingQuote - 1));
                     return closingQuote;
                 case 'n':
+                    int nullEnd = readLiteral(from, "null");
                     valueConsumer.accept(null);
-                    return from + 3;
+                    return nullEnd;
                 case 't':
+                    int trueEnd = readLiteral(from, "true");
                     valueConsumer.accept(true);
-                    return from + 3;
+                    return trueEnd;
                 case 'f':
+                    int falseEnd = readLiteral(from, "false");
                     valueConsumer.accept(false);
-                    return from + 4;
+                    return falseEnd;
                 default:
                     int numberEnd = readNumber(from);
                     valueConsumer.accept(parseNumber(from, numberEnd));
@@ -149,6 +152,18 @@ class JsonWheel {
             return from - 1;
         }
 
+        private int readLiteral(int from, String expected) {
+            int to = from;
+            while (to < chars.length && Character.isLetter(chars[to])) {
+                to++;
+            }
+            String literal = new String(Arrays.copyOfRange(chars, from, to));
+            if (!literal.equals(expected)) {
+                throw new JsonWheelException("Invalid literal '" + literal + "' at " + from);
+            }
+            return to - 1;
+        }
+
         private int next(char c, int from) {
             char prev = '\0';
             boolean isEscaped = false;
@@ -174,7 +189,7 @@ class JsonWheel {
 
 
         private Number parseNumber(int from, int to) {
-            String n = parseString(from, to);
+            String n = new String(Arrays.copyOfRange(chars, from, to + 1));
             try {
                 if (n.contains(".") || n.toLowerCase().contains("e")) {
                     BigDecimal bd = new BigDecimal(n);
@@ -212,9 +227,9 @@ class JsonWheel {
                         if (cpEnd > to) {
                             throw new JsonWheelException("Invalid codepoint at " + from);
                         }
-                        builder.appendCodePoint(Integer.parseInt(parseString(cpStart, cpEnd), 16));
+                        builder.appendCodePoint(Integer.parseInt(new String(Arrays.copyOfRange(chars, cpStart, cpEnd + 1)), 16));
                         from = cpEnd;
-                    // b) other escaped characters for which we can use the lookup table.
+                        // b) other escaped characters for which we can use the lookup table.
                     } else {
                         Character escapeLookup = ESCAPE_LOOKUP.get(chars[from]);
                         if (escapeLookup == null) {
